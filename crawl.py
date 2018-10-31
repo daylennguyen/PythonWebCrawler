@@ -48,7 +48,7 @@ def regexFindAllLinksInURL(url_string):
         matches = [ ]
         linelist = re.findall(r'(?:((href|src)(\s)?=(\s)?))?[\"\'](((\s)?(http|ftp)?s?://)(.*?))?[\"\'](\s)?', fileText,re.I)
         # linelist = re.findall('(?:(href( )?=( )?))"((http|ftp)s?://.*?)"', fileText,re.I)
-
+#
         for aline in linelist:
                 # print(str(aline))
                 if str(aline[4]) != '':
