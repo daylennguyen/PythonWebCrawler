@@ -43,14 +43,18 @@ def URLtoHTMLstring(url_string):
 def regexFindAllLinksInURL(url_string): 
         # filevar = open(url_string, 'r')
         fileText = URLtoHTMLstring(url_string)
-        matches = [ ]
-        linelist = re.findall('(?:((href|src)( )?=( )?))"(((http|ftp)?s?://):?(.*?))?"', fileText,re.I)
-        # linelist = re.findall('(?:(href( )?=( )?))"((http|ftp)s?://.*?)"', fileText,re.I)
-        print(linelist)
         print("\n")
+        # print(fileText)
+        matches = [ ]
+        linelist = re.findall(r'(?:((href|src)(\s)?=(\s)?))?[\"\'](((\s)?(http|ftp)?s?://)(.*?))?[\"\'](\s)?', fileText,re.I)
+        # linelist = re.findall('(?:(href( )?=( )?))"((http|ftp)s?://.*?)"', fileText,re.I)
 
         for aline in linelist:
-                print(aline)
+                # print(str(aline))
+                if str(aline[4]) != '':
+                        print(str(aline[4]) )
+                        
+                
 
 
         if(len(linelist) != 0): matches.append(linelist)
@@ -67,13 +71,17 @@ def fileToList(filename):
 
 
 def main():
-        urlList= fileToList('urls.txt')
-        # print(urlList[0])
-        htmlList=URLtoHTMLstring(urlList[0])
-        # print(htmlList)
-        regexFindAllLinksInURL(urlList[0])
+        # extract the urls from the txt file (one per line) 
+        # place them into a table
+        urlList= fileToList('urls6.txt')
+
+        
+        # retrieve the html from the url
+        htmlList=URLtoHTMLstring(urlList[2])
+        
+        regexFindAllLinksInURL(urlList[2])
         # resulting_html = str(getHTML(countdict))
-        # print(countdict)
+        print(urlList[0])
     
 
 
