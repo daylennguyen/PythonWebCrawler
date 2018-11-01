@@ -6,10 +6,10 @@ import crawl
 
 
 def test_main():
-    print(crawl.fileToList('urls.txt'))
-    print(crawl.fileToList('urls2.txt'))
-    print(crawl.fileToList('urls3.txt'))
-    print(crawl.fileToList('urls6.txt'))
+    crawl.main('urls.txt')
+    crawl.main('urls2.txt')
+    crawl.main('urls3.txt')
+    crawl.main('urls6.txt')
 
 
     # main()
