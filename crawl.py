@@ -149,7 +149,7 @@ def main():
 		# print(str(node.ChildrenAliasList))
 
 	for node in State.state_node_list:
-		print(str(node.ChildrenAliasList))
+		print(str(node.Alias) + "\t" + str(node.ChildrenAliasList))
 
 	State.state_Output_CSV.close()
 
