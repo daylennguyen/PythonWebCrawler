@@ -1,0 +1,70 @@
+alias:0
+		url: http://faculty.washington.edu/monikaso/a.html
+		kids:3 4 5
+alias:1
+		url: http://faculty.washington.edu/monikaso/b.html
+		kids:0 6 5 7 8 9
+alias:2
+		url: http://faculty.washington.edu/monikaso/c.html
+		kids:
+alias:3
+		url: http://faculty.washington.edu/monikaso/d.html
+		kids:
+alias:4
+		url: http://faculty.washington.edu/monikaso/e.html
+		kids:10 11
+alias:5
+		url: http://faculty.washington.edu/monikaso/f.html
+		kids:0
+alias:6
+		url: http://faculty.washington.edu/monikaso/g.html
+		kids:12 5
+alias:7
+		url: http://faculty.washington.edu/monikaso/h.html
+		kids:
+alias:8
+		url: http://faculty.washington.edu/monikaso/i.html
+		kids:13
+alias:9
+		url: http://faculty.washington.edu/monikaso/j.html
+		kids:2
+alias:10
+		url: http://faculty.washington.edu/monikaso/k.html
+		kids:
+alias:11
+		url: http://faculty.washington.edu/monikaso/l.html
+		kids:
+alias:12
+		url: http://faculty.washington.edu/monikaso/m.html
+		kids:
+alias:13
+		url: http://faculty.washington.edu/monikaso/n.html
+		kids:
+____________________________________________________________________________
+0       ['3', '4', '5']
+
+1       ['0', '6', '5', '7', '8', '9']
+
+2       []
+
+3       []
+
+4       ['10', '11']
+
+5       ['0']
+
+6       ['12', '5']
+
+7       []
+
+8       ['13']
+
+9       ['2']
+
+10      []
+
+11      []
+
+12      []
+
+13      []
