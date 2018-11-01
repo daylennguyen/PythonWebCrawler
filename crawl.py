@@ -77,10 +77,10 @@ class WebCrawlNode():
 		self.ChildrenAliasList.append(LinkAlias)
 		return self.ChildrenAliasList
 
-	def __init__(self, LinkNumber, Children_Array=[], URL_String="", ChildrenAliasList=[]):
+	def __init__(self, Alias, Children_Array=[], URL_String="", ChildrenAliasList=[]):
 		self.ChildrenAliasList = ChildrenAliasList
 		self.Children = Children_Array
-		self.LinkNumber = LinkNumber
+		self.Alias = Alias
 		self.URL = URL_String
 
 	def __str__(self):
@@ -116,11 +116,11 @@ def FindAllLinksInURL(current_linkNumber, url_string):
 #     return processed
 
 
-def findChildLinkNumber(childsLink, node_list):
+def findChildAlias(childsLink, node_list):
 	result = -1
 	for node in node_list:
 		if(node.URL == childsLink):
-			result = node.LinkNumber
+			result = node.Alias
 	return result
 
 
@@ -139,13 +139,13 @@ def main():
 		node.ChildrenAliasList = [ ]
 		if len(node.Children) > 0:
 			for child in node.Children:
-				currentChildAlias = str(findChildLinkNumber(child, State.state_node_list))
+				currentChildAlias = str(findChildAlias(child, State.state_node_list))
 				
 				if currentChildAlias != -1:
 					Children_LinkNums = Children_LinkNums + (currentChildAlias) + " "
 					node.pushChildAlias(currentChildAlias)
-		print("alias:"+str(node.LinkNumber) + "\n\turl: " + str(node.URL) + "\n\tkids:" + str(Children_LinkNums))
-		State.state_Output_CSV.write("\n"+str(node.LinkNumber) + "," + str(node.URL) + "," + str(Children_LinkNums))
+		print("alias:"+str(node.Alias) + "\n\turl: " + str(node.URL) + "\n\tkids:" + str(Children_LinkNums))
+		State.state_Output_CSV.write("\n"+str(node.Alias) + "," + str(node.URL) + "," + str(Children_LinkNums))
 		# print(str(node.ChildrenAliasList))
 
 	for node in State.state_node_list:
