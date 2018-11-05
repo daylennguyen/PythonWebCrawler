@@ -68,7 +68,7 @@ class CrawlerState():
 	#				Initialized to 0, unless told otherwise; also manrepresents the
 	#				current amount of assigned aliases.
 	#
-	def __init__(self, ToBeProcessed_URL_List=[], Processed_URL_List=[], Node_List=[], greatest_link_id=0, lenGenZero=0):
+	def __init__(self, ToBeProcessed_URL_List=[], Processed_URL_List=[], Node_List=[], greatest_link_id=0, lenGenZero=0, maxmentioned=0):
 		# ordered list of links which have been scanned
 		self.state_Processed_URL_List = Processed_URL_List
 
@@ -84,6 +84,8 @@ class CrawlerState():
 		self.state_ToBeProcessed_URL_List = self.fileToList(URL_FILE)
 
 		self.CreateCSVWriteHeader()
+
+
 
 		# The file where we will output our csv values
 	def CreateCSVWriteHeader(self):
@@ -161,6 +163,7 @@ class CrawlerState():
 			countsPerAlias.append(cumulativeChildList.count(alias))
 		maxes = []
 		maxValue = max(countsPerAlias)
+		self.maxmentioned = maxValue
 		# print(maxValue)
 		maxcounts = countsPerAlias.count(max(countsPerAlias))
 		for num in range(0, maxcounts):
@@ -275,7 +278,8 @@ def main():
 	#identify the generation of each node
 	root = tk.Tk()
 	app = Application(master=root)
-	app.makeGrid(generations)
+	print(State.maxmentioned)
+	app.makeGrid(generations,State.maxmentioned)
 	app.mainloop()
 
 

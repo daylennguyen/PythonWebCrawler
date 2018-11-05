@@ -28,13 +28,19 @@ class Application(tk.Frame):
 	def draw_line(self):
 		ShowLine.draw_rand(self)
 
-	def makeGrid(self,generation):
+	def makeGrid(self,generation,maxmentioned):
 		self.cnv.create_line(0,10,self.dimw,10, arrow=tk.BOTH)
-		spacer = (self.dimh/(generation+1))
+		spacerY = (self.dimh/(generation+1))
+		spacerX = (self.dimw/(maxmentioned+1))
 		curPositionY = 0
+		curPositionX = 0
+		# DrawYGrid
 		for num in range(0,generation):
-			curPositionY = curPositionY+spacer
+			curPositionY = curPositionY+spacerY
 			self.cnv.create_line(0,curPositionY,self.dimw,curPositionY, arrow=tk.BOTH)
+		for num in range(0,maxmentioned):
+			curPositionX = curPositionX+spacerX
+			self.cnv.create_line(curPositionX,0,curPositionX,self.dimh, arrow=tk.BOTH)
 			
 		
 
