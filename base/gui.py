@@ -1,15 +1,16 @@
 import tkinter as tk
 from tkinter import Tk, Canvas, Text
 from random import randint
-
 from show import ShowLine, ShowPoint, ShowRectangle, ShowTriangle 
+from shapes import Point,Line,Polygon,Rectangle,Triangle
 
 class Application(tk.Frame):
 	def __init__(self, master=None):
-		self.dim = 400
-		tk.Frame.__init__(self, master, width=self.dim*2, height=self.dim)
+		self.dimw = 400
+		self.dimh = 950
+		tk.Frame.__init__(self, master, width=self.dimw, height=self.dimh)
 		self.pack()
-		self.cnv = tk.Canvas(master, width=self.dim*2, height=self.dim)
+		self.cnv = tk.Canvas(master, width=self.dimw, height=self.dimh)
 		self.cnv.pack(side="bottom")
 		self.master = master
 		self.createWidgets()
@@ -27,8 +28,16 @@ class Application(tk.Frame):
 	def draw_line(self):
 		ShowLine.draw_rand(self)
 
-	def draw_point(self):
-		ShowPoint.draw_rand(self)
+	def makeGrid(self,generation):
+		self.cnv.create_line(0,10,self.dimw,10, arrow=tk.BOTH)
+		spacer = (self.dimh/(generation+1))
+		curPositionY = 0
+		for num in range(0,generation):
+			curPositionY = curPositionY+spacer
+			self.cnv.create_line(0,curPositionY,self.dimw,curPositionY, arrow=tk.BOTH)
+			
+		
+
 
 	def draw_rectangle(self):
 		ShowRectangle.draw_rand(self)

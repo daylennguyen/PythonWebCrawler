@@ -1,6 +1,7 @@
 import queue
 import re
 import urllib.request
+import copy
 from gui import *
 
 #CONSTANTS
@@ -92,6 +93,9 @@ class CrawlerState():
 	def WriteToCSV(self, Children_LinkNums, node):
 		self.state_Output_CSV.write(
 			"\n"+str(node.Alias) + "," + str(node.URL) + "," + str(Children_LinkNums))
+			
+	def CSVWriteMost(self, mostmentioned):
+		self.state_Output_CSV.write("\nMost Mentioned Node:\t,"+str(mostmentioned))
 
 	# Retrieves the file from the root directory (./)
 	# then extracts each line as an index within the urls file
@@ -101,12 +105,17 @@ class CrawlerState():
 		file.close()
 		return urls
 
+	def getCumulativeChildList(self):
+		cumulativeChildList = [ ]
+		for node in self.state_node_list:
+			cumulativeChildList = cumulativeChildList + node.ChildrenAliasList
+		return cumulativeChildList
+
 	def processLinks(self, lenGenZero):
 		# psudo queue; uses a list and pops index zero during each iteration
 		currentGenNumber = 0
 		currentGenSize=lenGenZero
 		NextGenSize=0
-
 		while(len(self.state_ToBeProcessed_URL_List) > 0 and len(self.state_Processed_URL_List) < 75):
 			# Count the number of each generation
 			if currentGenSize <= 0:
@@ -129,10 +138,35 @@ class CrawlerState():
 					if child not in self.state_Processed_URL_List:
 						NextGenSize = NextGenSize + 1
 						self.state_ToBeProcessed_URL_List.append(child)
+		return currentGenNumber
 						# ToString function; printed when calling str(  ) on this object
-
+	def findMostChildren(self):
+		resultAlias = ''
+		current_max_count = 0
+		for node in self.state_node_list:
+			currentChildCount = len(node.Children)
+			# print(str(currentChildCount))
+			if currentChildCount > current_max_count:
+				current_max_count = currentChildCount
+				resultAlias = node.Alias
+		return [resultAlias,current_max_count]
 	def __str__(self):
 		return "\nToBeProcessed_URL_List:\n\t" + str(self.state_ToBeProcessed_URL_List) + "\nProcessed_URL_List:\n\t" + str(self.state_Processed_URL_List) + "\nNode_List:\n\t" + str(self.state_node_list) + "\ngreatest_link_id:\n\t" + str(self.state_greatest_link_id)
+
+	
+	def findMostMentioned(self, cumulativeChildList):
+		countsPerAlias = []
+		for node in self.state_node_list:
+			alias=str(node.Alias)
+			countsPerAlias.append(cumulativeChildList.count(alias))
+		maxes = []
+		maxValue = max(countsPerAlias)
+		# print(maxValue)
+		maxcounts = countsPerAlias.count(max(countsPerAlias))
+		for num in range(0, maxcounts):
+			maxes.append(countsPerAlias.index(maxValue))
+		return maxes
+
 
 #--------------------------------------------------------------------
 # 	Representation of each parent/Link (Which may or may not have a parent)
@@ -155,8 +189,7 @@ class WebCrawlNode():
 
 	# Constructor which is initiated during instantiation of a WebCrawlNode
 	def __init__(self, Generation, Alias, Children_Array=[], URL_String="", ChildrenAliasList=[]):
-		print(str(Generation))
-
+		# print(str(Generation))
 		self.Generation = Generation
 		self.ChildrenAliasList = ChildrenAliasList
 		self.Children = Children_Array
@@ -217,7 +250,6 @@ def asignAliasToChildren(node, state):
 	print("[G"+ str(node.Generation) +"]alias:"+str(node.Alias) + "\n\turl: " +
 		  str(node.URL) + "\n\tkids:" + str(Children_LinkNums))
 
-
 #############
 #MAIN METHOD#
 #############
@@ -225,83 +257,28 @@ def main():
 	# initialize the state
 	State = CrawlerState()
 	# crawl urls
-	State.processLinks(State.lenGenZero)
+	generations = State.processLinks(State.lenGenZero)
 	# assign aliases to the nodes and print them to the csv
 	for node in State.state_node_list:
 		asignAliasToChildren(node, State)
+
+	cumList = State.getCumulativeChildList()
+	# print(str(cumList))
+	most = State.findMostChildren() 
+	mm= State.findMostMentioned(cumList)
+	
+	print("mm="+str(mm))
+	print( f'Node with the most children is NODE[{most[0]}] with {most[1]} children' )
+
+	State.CSVWriteMost(mm)
 	State.state_Output_CSV.close()
 	#identify the generation of each node
 	root = tk.Tk()
 	app = Application(master=root)
+	app.makeGrid(generations)
 	app.mainloop()
+
+
 main()
 
 
-	# def getCumulativeChildList(self):
-	# 	cumulativeChildList = [ ]
-	# 	for node in self.state_node_list:
-	# 		cumulativeChildList = cumulativeChildList + node.ChildrenAliasList
-	# 	return cumulativeChildList
-	
-	# def findMostChildren(self):
-	# 	current_max = 0
-	# 	for node in self.state_node_list:
-	# 		currentChildCount = len(node.Children)
-	# 		if currentChildCount > current_max:
-	# 			current_max = currentChildCount
-	# 	return current_max
-
-	# def findMostMentioned(self, cumulativeChildList):
-	# 	MentionCountPerAlias = []
-	# 	cMostMentioned = []
-	# 	currentRemoveCount = 1
-	# 	IndexJumper = 0
-
-	# 	for node in self.state_node_list:
-	# 		current = cumulativeChildList.count(node.Alias)
-	# 		for i in range(1, current):
-	# 			cumulativeChildList.remove(node.Alias)
-	# 		MentionCountPerAlias.append(current)
-	# 	MaxMentionCount=max(MentionCountPerAlias)
-	# 	#could be multiple with same max mention count
-	# 	while(max(MentionCountPerAlias) == MaxMentionCount and currentRemoveCount != len(MentionCountPerAlias)):
-	# 		maxNodeAlias = MentionCountPerAlias.index(MaxMentionCount) + currentRemoveCount
-	# 		cMostMentioned.append(maxNodeAlias)
-	# 		currentRemoveCount = currentRemoveCount + 1
-
-
-
-	# 		# if node not in cMostMentioned:
-	# 		# 	if cumulativeChildList.count(node.Alias) > cMaxMentionCount:
-
-		
-	# def processLinks(self, lenGenZero):
-	# 	# psudo queue; uses a list and pops index zero during each iteration
-	# 	currentGenNumber = 0
-	# 	currentGenSize=lenGenZero
-	# 	NextGenSize=0
-
-	# 	while(len(self.state_ToBeProcessed_URL_List) > 0 and len(self.state_Processed_URL_List) < 75):
-	# 		# Count the number of each generation
-	# 		if currentGenSize <= 0:
-	# 			currentGenNumber = currentGenNumber + 1
-	# 			currentGenSize = NextGenSize
-	# 			NextGenSize = 0
-
-	# 		url = self.state_ToBeProcessed_URL_List.pop(0)
-	# 		currentGenSize = currentGenSize - 1
-	# 		# avoid 2 links pointing to eachother causing infinite loop
-	# 		if url not in self.state_Processed_URL_List:
-	# 			currentNode = FindAllLinksInURL(self.state_greatest_link_id, url, currentGenNumber)
-	# 			# Increment the alias
-	# 			self.state_greatest_link_id += 1
-	# 			self.state_node_list.append(currentNode)
-	# 			self.state_Processed_URL_List.append(url)
-	# 			# process the children-table of the current link
-	# 			for child in currentNode.Children:
-	# 				# Avoid reprocessing
-	# 				if child not in self.state_Processed_URL_List:
-	# 					NextGenSize = NextGenSize + 1
-	# 					self.state_ToBeProcessed_URL_List.append(child)
-	# 					# ToString function; printed when calling str(  ) on this object
-	# 		# else:
