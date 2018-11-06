@@ -62,6 +62,7 @@ class Application(tk.Frame):
 		PreviousNodeGen = -1
 		generationList = []
 		NodeWidthForGen = self.spacerX/2.5
+		nodeCoordinates=[]
 
 		for node in self.node_list:
 			generationList.append(node.Generation)
@@ -73,6 +74,7 @@ class Application(tk.Frame):
 				PreviousNodeGen = node.Generation
 				NodesInGenerationSpacer = (self.dimw/(NumNodesInGeneration+1))
 				currentNodePositionX = NodesInGenerationSpacer
+				nodeCoordinates.append( [currentNodePositionX, currentNodePositionY] )
 				self.cnv.create_circle(currentNodePositionX, currentNodePositionY,NodeWidthForGen)
 				# if we are, then save it and calculate the initial
 				# space between each node in the generation
@@ -85,8 +87,11 @@ class Application(tk.Frame):
 				# same generation?
 			else:# then increment the position
 				currentNodePositionX = (currentNodePositionX + NodesInGenerationSpacer)
-				self.cnv.create_circle(currentNodePositionX, currentNodePositionY,NodeWidthForGen)
+			self.cnv.create_circle(currentNodePositionX, currentNodePositionY,NodeWidthForGen)
+			coords=[int(currentNodePositionX), int(currentNodePositionY)]
+			nodeCoordinates.append( coords )
 			self.cnv.create_text(currentNodePositionX, currentNodePositionY, text='N'+str(node.Alias))
+		print(str(nodeCoordinates))
 
 
 	def _create_circle(self, x, y, r, **kwargs):
