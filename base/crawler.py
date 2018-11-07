@@ -6,7 +6,7 @@ from gui import *
 
 # CONSTANTS
 HEADER = "Alias, URL, Children"
-URL_FILE = "../urls/urls3.txt"
+URL_FILE = "../urls/urls.txt"
 OUTPUT_CSV_FILE = "../output/output.csv"
 MSG_INVALID_TEXT = "invalid txt"
 CHILD_FIRST_OCCURANCE = -1
@@ -40,10 +40,7 @@ PROC_LINKS_MAX = 75
 #         o graph building logic
 #         o csv file and highest linked page count
 # ------------------------------------------------------------------------------------------#
-
 # Contains the current state of the script
-
-
 class CrawlerState():
 
 	# Constructor, instantiated when creating a new instance of CrawlerState()
@@ -222,8 +219,6 @@ class WebCrawlNode():
 # Uses the imported urllib to scan the html contents
 # found at the given url_string
 # this is then returned in the form of a String
-
-
 def URLtoHTMLstring(url_string):
 	try:
 		page = urllib.request.urlopen(url_string)
@@ -236,8 +231,6 @@ def URLtoHTMLstring(url_string):
 # 	each link found at the location is considered a child node
 # 	and is placed within matches[].
 # 	@return the extracted information in the form of a new WebCrawlNode
-
-
 def FindAllLinksInURL(current_Alias, url_string, GenNum):
 	fileText = URLtoHTMLstring(url_string)
 	matches = []
@@ -307,9 +300,9 @@ def main():
 	app = Application(generations, most[1], State.state_node_list, master=root)
 	print(most)
 	app.makeGrid()
-	app.LabelGens()
 	app.drawNodes(generations)
 	app.drawNodesChildConnections()
+	app.LabelGens()
 	app.mainloop()
 
 main()
