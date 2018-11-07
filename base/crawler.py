@@ -6,12 +6,12 @@ from gui import *
 
 # CONSTANTS
 HEADER = "Alias, URL, Children"
-URL_FILE = "../urls/urls6.txt"
+URL_FILE = "../urls/urls.txt"
 OUTPUT_CSV_FILE = "../output/output.csv"
 MSG_INVALID_TEXT = "invalid txt"
 CHILD_FIRST_OCCURANCE = -1
 PROC_LINKS_MAX = 75
-
+DEBUG=True
 
 # -------Do------------------------------------------------------------------------------#
 # [x] Retrieve and open input file contPzzzaining URLs
@@ -122,6 +122,7 @@ class CrawlerState():
 		NextGenSize = 0
 		while(len(self.state_ToBeProcessed_URL_List) >
 				0 and len(self.state_Processed_URL_List) < 75):
+			
 			# Count the number of each generation
 			if currentGenSize <= 0:
 				currentGenNumber = currentGenNumber + 1
@@ -150,13 +151,16 @@ class CrawlerState():
 	def findMostChildren(self):
 		resultAlias = ''
 		current_max_count = 0
+		result=[]
 		for node in self.state_node_list:
 			currentChildCount = len(node.Children)
-			# print(str(currentChildCount))
 			if currentChildCount > current_max_count:
 				current_max_count = currentChildCount
 				resultAlias = node.Alias
-		return [resultAlias, current_max_count]
+		result =  [resultAlias, current_max_count]
+		if DEBUG is True:
+			print(f'Most Children: Node{result[0]} with a children count of {result[1]}')
+		return result
 
 	def __str__(self):
 		return f"""\nToBeProcessed_URL_List:\n\t" +
@@ -174,7 +178,6 @@ class CrawlerState():
 		maxes = []
 		maxValue = max(countsPerAlias)
 		self.maxmentioned = maxValue
-		# print(maxValue)
 		maxcounts = countsPerAlias.count(max(countsPerAlias))
 		for num in range(0, maxcounts):
 			maxes.append(countsPerAlias.index(maxValue))
@@ -268,7 +271,8 @@ def asignAliasToChildren(node, state):
 					(currentChildAlias) + " "
 				node.pushChildAlias(currentChildAlias)
 	state.WriteToCSV(Children_LinkNums, node)  # write it to the csv
-	print("[G" + str(node.Generation) + "]alias:"+str(node.Alias) + "\n\turl: " + str(node.URL) + "\n\tkids:" + str(Children_LinkNums))
+	if DEBUG is True:
+		print("[G" + str(node.Generation) + "]alias:"+str(node.Alias) + "\n\turl: " + str(node.URL) + "\n\tkids:" + str(Children_LinkNums))
 
 # ########### #
 # MAIN METHOD #
@@ -289,17 +293,19 @@ def main():
 	cumList = State.getCumulativeChildList()
 	most = State.findMostChildren()
 	mm = State.findMostMentioned(cumList)
-
-	print("mm="+str(mm))
-	print(
-		f'Node with the most children is NODE[{most[0]}] with {most[1]} children')
+	if DEBUG is True:
+		spacer = f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
+		print(f"Node that was mentioned most: N{str(mm)}")
+		print(f'Node with the most children is NODE[{most[0]}] with {most[1]} children')
+		print(f'\n{spacer}\tCUMULATIVE-CHILD-LIST\n{spacer}{cumList}\n{spacer}')
 	State.CSVWriteMost(mm)
 	State.state_Output_CSV.close()
 	# identify the generation of each node
 	root = tk.Tk()
+	root.iconbitmap(r'favicon.ico')
 	app = Application(generations, most[1], State.state_node_list, master=root)
-	print(most)
 	app.makeGrid()
+	
 	app.drawNodes(generations)
 	app.drawNodesChildConnections()
 	app.LabelGens()
