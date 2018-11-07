@@ -309,7 +309,7 @@ def main():
 	app.makeGrid()
 	app.LabelGens()
 	app.drawNodes(generations)
+	app.drawNodesChildConnections()
 	app.mainloop()
-
 
 main()
