@@ -6,7 +6,7 @@ from gui import *
 
 # CONSTANTS
 HEADER = "Alias, URL, Children"
-URL_FILE = "../urls/urls.txt"
+URL_FILE = "../urls/urls6.txt"
 OUTPUT_CSV_FILE = "../output/output.csv"
 MSG_INVALID_TEXT = "invalid txt"
 CHILD_FIRST_OCCURANCE = -1
