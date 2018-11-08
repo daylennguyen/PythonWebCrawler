@@ -1,18 +1,3 @@
-import queue
-import re
-import urllib.request
-import copy
-from gui import *
-
-# CONSTANTS
-HEADER = "Alias, URL, Children"
-URL_FILE = "../urls/urls.txt"
-OUTPUT_CSV_FILE = "../output/output.csv"
-MSG_INVALID_TEXT = "invalid txt"
-CHILD_FIRST_OCCURANCE = -1
-PROC_LINKS_MAX = 75
-DEBUG=True
-
 # -------Do------------------------------------------------------------------------------#
 # [x] Retrieve and open input file contPzzzaining URLs
 # [x] Retrieve plain text HTML located at the URLs from file
@@ -40,53 +25,63 @@ DEBUG=True
 #         o graph building logic
 #         o csv file and highest linked page count
 # ------------------------------------------------------------------------------------------#
-# Contains the current state of the script
-class CrawlerState():
+# import queue
+import re
+import urllib.request
+import copy
+from gui import *
 
-	# Constructor, instantiated when creating a new instance of CrawlerState()
-	#
-	# @ToBeProcessed_URL_List:
-	#               When the state is initialized, this array is appended with
-	# 				the URLs from the given file. (SEE py)
-	# 				An array of urls to be processed, in-order of when the URL
-	#               is initially scanned.
-	# 				Newly discorvered links are sent to the end of this array
-	#               in the form of a string.
-	#
-	# @Processed_URL_List:
-	# 				An array containing an ordered list of urls which have
-	# 				been processed and transfered from the @ToBeProcessed_URL_List
-	# 				All URLs in this list are in the form of a string
-	#
-	# @Node_List:
-	# 				An array of WebCrawlerNodes in-order of FirstScanned-to-LastScanned
-	#
-	# @greatest_link_id:
-	# 				The value which is used to assign each node a unique alias.
-	# 				Used and incremeneted during the processLinks() function.
-	# 				Initialized to 0, unless told otherwise; also manrepresents the
-	# 				current amount of assigned aliases.
-	#
+# CONSTANTS
+REGEX4LINKS = r'(?:(a (\s)?href(\s)?=(\s)?))[\"\'](((\s)?(http|ftp)?s?://)(.*?))?[\"\'](\s)?'
+HEADER = "Alias, URL, Children"
+URL_FILE = "../urls/urls.txt"
+OUTPUT_CSV_FILE = "../output/output.csv"
+MSG_INVALID_TEXT = "invalid txt"
+CHILD_FIRST_OCCURANCE = -1
+PROC_LINKS_MAX = 75
+DEBUG=True
+
+
+'''
+	Contains the current state of the script
+	@ToBeProcessed_URL_List:
+				When the state is initialized, this array is appended with
+					the URLs from the given file. (SEE py)
+					An array of urls to be processed, in-order of when the URL
+				is initially scanned.
+					Newly discorvered links are sent to the end of this array
+				in the form of a string.
+	
+	@Processed_URL_List:
+					An array containing an ordered list of urls which have
+					been processed and transfered from the @ToBeProcessed_URL_List
+					All URLs in this list are in the form of a string
+	
+	@Node_List:
+					An array of WebCrawlerNodes in-order of FirstScanned-to-LastScanned
+	
+	@greatest_link_id:
+					The value which is used to assign each node a unique alias.
+					Used and incremeneted during the processLinks() function.
+					Initialized to 0, unless told otherwise; also manrepresents the
+					current amount of assigned aliases.
+'''	
+# class CrawlerUtility():
+
+class CrawlerState():
 	def __init__(self, ToBeProcessed_URL_List=[], Processed_URL_List=[],
-				 Node_List=[], greatest_link_id=0, lenGenZero=0,
-				 maxmentioned=0):
+				 Node_List=[], greatest_link_id=0,
+				 lenGenZero=0, maxmentioned=0):
 		# ordered list of links which have been scanned
 		self.state_Processed_URL_List = Processed_URL_List
-
 		# Processed URLs, converted to WebCrawlerNodes
 		self.state_node_list = Node_List
-
 		# The Counter for the number of unique links found
 		self.state_greatest_link_id = greatest_link_id
-
 		self.lenGenZero = len(self.fileToList(URL_FILE))
-
 		# Initialize the list with the Links in the txtfile
 		self.state_ToBeProcessed_URL_List = self.fileToList(URL_FILE)
-
 		self.CreateCSVWriteHeader()
-
-		# The file where we will output our csv values
 
 	def CreateCSVWriteHeader(self):
 		self.state_Output_CSV = open(OUTPUT_CSV_FILE, "w+")
@@ -115,39 +110,45 @@ class CrawlerState():
 			cumulativeChildList = cumulativeChildList + node.ChildrenAliasList
 		return cumulativeChildList
 
-	def processLinks(self, lenGenZero):
+	def processLinks(self):
 		# psudo queue; uses a list and pops index zero during each iteration
-		currentGenNumber = 0
-		currentGenSize = lenGenZero
-		NextGenSize = 0
-		while(len(self.state_ToBeProcessed_URL_List) >
-				0 and len(self.state_Processed_URL_List) < 75):
-			
-			# Count the number of each generation
-			if currentGenSize <= 0:
-				currentGenNumber = currentGenNumber + 1
-				currentGenSize = NextGenSize
-				NextGenSize = 0
+		self.currentGenNumber = 0
+		# begin with the urls in the file
+		self.currentGenSize = self.lenGenZero
+		self.NextGenSize = 0
+		self.crawl()
+		return self.currentGenNumber
 
-			url = self.state_ToBeProcessed_URL_List.pop(0)
-			currentGenSize = currentGenSize - 1
-			# avoid 2 links pointing to eachother causing infinite loop
-			if url not in self.state_Processed_URL_List:
-				currentNode = FindAllLinksInURL(
-					self.state_greatest_link_id, url, currentGenNumber)
-				# Increment the alias
-				self.state_greatest_link_id += 1
-				self.state_node_list.append(currentNode)
-				self.state_Processed_URL_List.append(url)
-				# process the children-table of the current link
-				for child in currentNode.Children:
-					# Avoid reprocessing
-					if child not in self.state_Processed_URL_List:
-						NextGenSize = NextGenSize + 1
-						self.state_ToBeProcessed_URL_List.append(child)
-		return currentGenNumber
-		# ToString function; printed when calling str(  ) on this object
+	def crawl(self):
+			while(len(self.state_ToBeProcessed_URL_List) >
+			0 and len(self.state_Processed_URL_List) < 75):
+				# Count the number of each generation
+				self.generationUpdate()
+				url = self.state_ToBeProcessed_URL_List.pop(0)
+				if url not in self.state_Processed_URL_List:
+					children = Search4Links(self.state_greatest_link_id, url, self.currentGenNumber)
+					currentNode = WebCrawlNode(self.currentGenNumber, self.state_greatest_link_id, children, url)
+					self.pushNode(currentNode)
+					# process the children-table of the current link
+					for child in currentNode.Children:
+						# Avoid reprocessing
+						if child not in self.state_Processed_URL_List:
+							self.NextGenSize = self.NextGenSize + 1
+							self.state_ToBeProcessed_URL_List.append(child)
 
+	def generationUpdate(self):
+			if self.currentGenSize <= 0:
+				self.currentGenNumber = self.currentGenNumber + 1
+				self.currentGenSize = self.NextGenSize
+				self.NextGenSize = 0
+			self.currentGenSize = self.currentGenSize - 1
+			return self.currentGenSize
+
+	def pushNode(self, node):
+		self.state_greatest_link_id += 1
+		self.state_node_list.append(node)
+		self.state_Processed_URL_List.append(node.URL)
+	
 	def findMostChildren(self):
 		resultAlias = ''
 		current_max_count = 0
@@ -162,6 +163,7 @@ class CrawlerState():
 			print(f'Most Children: Node{result[0]} with a children count of {result[1]}')
 		return result
 
+	# ToString function; printed when calling str(  ) on this object
 	def __str__(self):
 		return f"""\nToBeProcessed_URL_List:\n\t" +
 		{str(self.state_ToBeProcessed_URL_List)} +
@@ -229,26 +231,26 @@ def URLtoHTMLstring(url_string):
 	except:
 		pageText = "invalid txt"
 	return str(pageText)
-
-# 	Uses Regex to extract the links from a given url_string
-# 	each link found at the location is considered a child node
-# 	and is placed within matches[].
-# 	@return the extracted information in the form of a new WebCrawlNode
-def FindAllLinksInURL(current_Alias, url_string, GenNum):
-	fileText = URLtoHTMLstring(url_string)
+'''
+	Uses Regex to extract the links from a given url_string
+	each link found at the location is considered a child node
+	and is placed within matches[].
+	@return the extracted information in the form of a new WebCrawlNode
+'''
+def Search4Links(current_Alias, url_string, GenNum):
 	matches = []
-	linelist = re.findall(
-		r'(?:(a (\s)?href(\s)?=(\s)?))[\"\']'
-		r'(((\s)?(http|ftp)?s?://)(.*?))?[\"\'](\s)?', fileText, re.I)
+	fileText = URLtoHTMLstring(url_string)
+	linelist = re.findall(REGEX4LINKS, fileText, re.I)
 	for aline in linelist:
 		# Check for no match
 		if str(aline[4]) != '' and str(aline[4]) != ' ':
 			matches.append(aline[4])
-	return WebCrawlNode(GenNum, current_Alias, matches, url_string)
+	return matches 
+	# WebCrawlNode(GenNum, current_Alias, matches, url_string)
+
+# def RegexPlainHTML()
 
 # Function used to match a node's children with their given alias.
-
-
 def findChildAlias(childsLink, node_list):
 	result = CHILD_FIRST_OCCURANCE
 	for node in node_list:
@@ -264,8 +266,7 @@ def asignAliasToChildren(node, state):
 	if len(node.Children) > 0:  # ensure that the node has children
 		for child in node.Children:
 				# iterate over the children and find their alias
-			currentChildAlias = str(
-				findChildAlias(child, state.state_node_list))
+			currentChildAlias = str(findChildAlias(child, state.state_node_list))
 			if int(currentChildAlias) >= 0 and currentChildAlias not in node.ChildrenAliasList:
 				Children_LinkNums = Children_LinkNums + \
 					(currentChildAlias) + " "
@@ -282,9 +283,9 @@ def asignAliasToChildren(node, state):
 def main():
 	# initialize the state
 	State = CrawlerState()
-
 	# crawl urls
-	generations = State.processLinks(State.lenGenZero)
+	generations = State.processLinks()
+
 
 	# assign aliases to the nodes and print them to the csv
 	for node in State.state_node_list:
