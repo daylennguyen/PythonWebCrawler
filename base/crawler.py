@@ -26,6 +26,7 @@
 #         o csv file and highest linked page count
 # ------------------------------------------------------------------------------------------#
 # import queue
+import multiprocessing
 import re
 import urllib.request
 import copy
@@ -118,7 +119,6 @@ class CrawlerState():
 		self.NextGenSize = 0
 		self.crawl()
 		return self.currentGenNumber
-
 	def crawl(self):
 			while(len(self.state_ToBeProcessed_URL_List) >
 			0 and len(self.state_Processed_URL_List) < 75):
