@@ -1,3 +1,16 @@
+"""
+			**************************************************************************************************************
+				NAME: DAYLEN NGUYEN 	[ SID: 1524571 ]
+				CLASS: TCSS 480
+				ASSIGNMENT: 1 WEB CRAWLER
+				DESCRIPTION:
+						A 'WebCrawler' designed to scan the given url file (../urls/url.txt).
+						the urls to which were scanned for links. The resulting links found
+						within the url are then scanned. These steps are repeated until
+						we've exhausted/scanned all of the links or reached the set max (75).
+			**************************************************************************************************************
+"""
+
 # -------Do------------------------------------------------------------------------------#
 # [x] Retrieve and open input file contPzzzaining URLs
 # [x] Retrieve plain text HTML located at the URLs from file
@@ -5,7 +18,6 @@
 # [x] Read all urls from file using loop
 # [x] Create an CSV file of the information containing alias' for kids
 # [x] Create a graph using KTinker written classes
-# [x] add Parallization
 # [x] Graphing -
 # 			Iterate over the node_list;
 # 			Generation 0 is the number of links in the URL_File
@@ -13,9 +25,9 @@
 # 			generation 0. (Cumulative)
 # 			Count each and iterate depending on previous generation child count
 #
+# [o] create understandable ui
 # [o] Retrieve highest link page count
-# [o]
-# [o]
+# [ :( ] add Parallization
 # -------Grading------------------------------------------------------------------------#
 # • Graph is 7.5 pts
 # • Parallelization 7.5 pts
@@ -25,9 +37,7 @@
 #         o graph building logic
 #         o csv file and highest linked page count
 # ------------------------------------------------------------------------------------------#
-# import queue
-from multiprocessing import Array, Process, current_process,Queue, Value
-
+from multiprocessing import Array, Process,Queue, Value
 import multiprocessing
 import re
 import urllib.request
@@ -35,7 +45,10 @@ import copy
 from gui import *
 
 
+### Note ! change the value for debug to remove many console logs; does not remove concurrency prints
+###
 # CONSTANTS
+DEBUG = True
 REGEX4LINKS = r'(?:(a (\s)?href(\s)?=(\s)?))[\"\'](((\s)?(http|ftp)?s?://)(.*?))?[\"\'](\s)?'
 HEADER = "Alias, URL, Children"
 URL_FILE = "../urls/urls.txt"
@@ -43,7 +56,6 @@ OUTPUT_CSV_FILE = "../output/output.csv"
 MSG_INVALID_TEXT = "invalid txt"
 CHILD_FIRST_OCCURANCE = -1
 PROC_LINKS_MAX = 75
-DEBUG = True
 
 '''
 	Contains the current state of the script
@@ -121,9 +133,10 @@ class CrawlerState():
 		return self.currentGenNumber.value
 
 
-
+# primary functionality and algorithm contained within this function;
+# scan for links at all urls found until we run out of urls/links OR we've reached 75
+# Now implements concurrency! (huzzah!)
 	def crawl(self):
-
 		# initialize
 		node_queue = multiprocessing.Queue()
 		#  producer inserts urls found in link search (form of string array)
@@ -152,10 +165,9 @@ class CrawlerState():
 				if url not in self.state_Processed_URL_List:
 					url_queue.put(url)
 					self.state_Processed_URL_List.append(url)
-					# if not children_queue.empty():
-					# 	children_queue.get() 
-					# When the consumer pushes a built node; check if
-					# we recognize the url, ignore it if we do otherwise process it
+
+			# When the consumer pushes a built node; check if
+			# we recognize the url, ignore it if we do otherwise process it
 			if not node_queue.empty():
 				print(str(self.NextGenSize.value))
 				currentNode = node_queue.get() 
@@ -165,15 +177,17 @@ class CrawlerState():
 				for child in currentNode.Children:
 					if child not in self.state_Processed_URL_List:
 						self.state_ToBeProcessed_URL_List.append(child)
-						
-				print(f'cur_node: {currentNode} ')
+				if DEBUG is True:
+					print(f'cur_node: {currentNode} ')
 		completed.value = 1
-		print(f'completed.value: {completed.value} ')
+		if DEBUG is True:
+			print(f'completed.value: {completed.value} ')
 
 		producer.join()
 		consumer.join()
-		print(f'producer and consumer joined ')
-		print(len(self.state_node_list))
+		if DEBUG is True:
+			print(f'producer and consumer joined ')
+			print(len(self.state_node_list))
 		# after while execution
 		# for num in range(0, node_queue.qsize()):
 		# 	node_popped = node_queue.get()
@@ -184,7 +198,7 @@ class CrawlerState():
 
 
 
-
+	# DEPRECATED! Post concurrency implementation
 	def generationUpdate(currentGenSize,currentGenNumber,NextGenSize):
 			if currentGenSize.value <= 0:
 				currentGenNumber.value = currentGenNumber.value + 1
@@ -193,12 +207,14 @@ class CrawlerState():
 			currentGenSize.value = currentGenSize.value - 1
 			return currentGenSize
 
+    # increment the greatest link id while inserting the node into our lists
 	def pushNode(self, node):
 		# multiprocessing.lock
 		self.state_greatest_link_id += 1
 		self.state_node_list.append(node)
 		self.state_Processed_URL_List.append(node.URL)
 
+    # iterates over all of the nodes in the state, scanning for the node with the most children
 	def findMostChildren(self):
 		resultAlias = ''
 		current_max_count = 0
@@ -223,6 +239,7 @@ class CrawlerState():
 		"\ngreatest_link_id:\n\t" +
 		{str(self.state_greatest_link_id)}"""
 
+    # iterates over all of the nodes in the state, scanning for the node with the most mentioned node
 	def findMostMentioned(self, cumulativeChildList):
 		countsPerAlias = []
 		for node in self.state_node_list:
@@ -274,8 +291,6 @@ class WebCrawlNode():
 # Uses the imported urllib to scan the html contents
 # found at the given url_string
 # this is then returned in the form of a String
-
-
 def URLtoHTMLstring(url_string):
 	try:
 		page = urllib.request.urlopen(url_string)
@@ -291,8 +306,6 @@ def URLtoHTMLstring(url_string):
 	and is placed within matches[].
 	@return the extracted information in the form of a new WebCrawlNode
 '''
-
-
 def Search4Links(url_string):
 	matches = []
 	fileText = URLtoHTMLstring(url_string)
@@ -302,20 +315,14 @@ def Search4Links(url_string):
 		if str(aline[4]) != '' and str(aline[4]) != ' ':
 			matches.append(aline[4])
 	return matches
-	# WebCrawlNode(GenNum, current_Alias, matches, url_string)
-
-# def RegexPlainHTML()
 
 # Function used to match a node's children with their given alias.
-
-
 def findChildAlias(childsLink, node_list):
 	result = CHILD_FIRST_OCCURANCE
 	for node in node_list:
 		if(node.URL == childsLink):
 			result = node.Alias
 	return result
-
 
 def asignAliasToChildren(node, state):
 	Children_LinkNums = ""
@@ -336,21 +343,34 @@ def asignAliasToChildren(node, state):
 		print("[G" + str(node.Generation) + "]alias:"+str(node.Alias) +
 			  "\n\turl: " + str(node.URL) + "\n\tkids:" + str(Children_LinkNums))
 
+"""
+###########################################
 
+	Concurrency functions executed by spawned processes
+
+###########################################
+"""
+
+# scans pages for links then pushes them to the shared stack which is then accepted
+# as input into the consumer process.
 def PRODUCER_PROCESS(producer_stall,SHARED_CHILDREN_Q, url_Q, completed):
 			# ! PRODUCER add children to the CHILDREN_QQQQ
 			producer_has_processed = []
-
-			print('[ PRODUCER ] process executing')
+			if DEBUG is True:
+				print('[ PRODUCER ] process executing')
 			while completed.value is not 1 and producer_stall is not 150:
+				# time out var
 				producer_stall += 1
 				if not url_Q.empty():
 					producer_stall = 0
 					get = url_Q.get()
-					# print(get)
+					# ignore links that we've already processed
 					if get not in producer_has_processed:
 						producer_has_processed.append(get)
-						print(f'[ PRODUCER ] has retrieved {get} ')
+						if DEBUG is True:
+							print(f'[ PRODUCER ] has retrieved {get} ')
+						# when the consumer constructs a node,
+						#  it will pull index 0 for the node url; the rest are the children
 						children = [get] + Search4Links(get) 
 						if children is not []:
 							SHARED_CHILDREN_Q.put(children)
@@ -360,14 +380,16 @@ def PRODUCER_PROCESS(producer_stall,SHARED_CHILDREN_Q, url_Q, completed):
 def CONSUMER_PROCESS(currentGenSize,NextGenSize, state_greatest_link_id, currentGenNumber,SHARED_CHILDREN_Q,nodeQ, completed, PROCESSED_LIST):
 			#! CONSUMER WILL GET THE FRONT OF THE CHILD QUEUE AND
 			#!  PUSH A WEBNODE TO THE NODEQ 
-			print('*[ CONSUMER ]  process executing')
-
+			if DEBUG is True:
+				print('*[ CONSUMER ]  process executing')
+			
 			while completed.value is not 1:
 			# process the children ListObject at the head of the q
 				if not SHARED_CHILDREN_Q.empty():
-											# ! Generation update
+						# ! alt-Generation update ; track the generation by counting the children in accordance to the links contained.
 						if currentGenSize.value <= 0:
-							print('*[ CONSUMER ] is in if statement desu')
+							if DEBUG is True:
+								print('*[ CONSUMER ] is in if statement desu')
 							currentGenNumber.value = currentGenNumber.value + 1
 							currentGenSize.value = NextGenSize.value
 							NextGenSize.value = 0
@@ -375,23 +397,26 @@ def CONSUMER_PROCESS(currentGenSize,NextGenSize, state_greatest_link_id, current
 						childrenset = SHARED_CHILDREN_Q.get()
 						url = childrenset.pop(0)
 
-
 						# reconstruct the children in array form
 						children = []
 						for child in childrenset:
 							children.append(child)
+							# do not add the children to the 'to be processed list' if it has already been processed
 							if child not in PROCESSED_LIST:
 								NextGenSize.value = NextGenSize.value + 1
 								PROCESSED_LIST.append(child)
 						print(f'*[ CONSUMER ] NextGenSize.value is = {NextGenSize.value} \t currentGenSize.value = {currentGenSize.value} \t currentGenNumber = {currentGenNumber.value} \tstate_greatest_link_id.value = {state_greatest_link_id.value} ')
+
+						# Push the node to the queue to be imported into the state node list
 						nodeQ.put(WebCrawlNode(currentGenNumber.value, state_greatest_link_id.value, children, url))
 
 
 
-
-# ########### #
-# MAIN METHOD #
-# ########### #
+"""
+# ########### ## ########### ## ########### ## ########### #
+													MAIN METHOD 
+# ########### ## ########### ## ########### ## ########### #
+"""
 if __name__ == '__main__':
 	# initialize the state
 	State = CrawlerState()
@@ -415,6 +440,7 @@ if __name__ == '__main__':
 	State.state_Output_CSV.close()
 	# identify the generation of each node
 	root = tk.Tk()
+	# ! UNCOMMENT FOR CUSTOM WINDOW ICON; does not work on linux
 	# root.iconbitmap(r'favicon.ico')
 	app = Application(generations, most[1], State.state_node_list, master=root)
 	app.makeGrid()
