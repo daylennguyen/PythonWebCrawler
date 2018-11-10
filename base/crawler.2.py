@@ -43,7 +43,7 @@ OUTPUT_CSV_FILE = "../output/output.csv"
 MSG_INVALID_TEXT = "invalid txt"
 CHILD_FIRST_OCCURANCE = -1
 PROC_LINKS_MAX = 75
-DEBUG = False
+DEBUG = True
 
 '''
 	Contains the current state of the script
@@ -75,7 +75,6 @@ class CrawlerState():
 	def __init__(self, ToBeProcessed_URL_List=[], Processed_URL_List=[],
 				 Node_List=[], greatest_link_id=Value("i",0),
 				 lenGenZero=0, maxmentioned=0):
-		self.lock = multiprocessing.Lock()
 		# ordered list of links which have been scanned
 		self.state_Processed_URL_List = Processed_URL_List
 		# Processed URLs, converted to WebCrawlerNodes
@@ -145,7 +144,6 @@ class CrawlerState():
 		stall_counter = 0
 		while(stall_counter < 10000 and len(self.state_Processed_URL_List) < 75):
 			stall_counter += 1
-
 			if len(self.state_ToBeProcessed_URL_List) > 0:
 				stall_counter =0
 				url = self.state_ToBeProcessed_URL_List.pop(0)
@@ -161,9 +159,13 @@ class CrawlerState():
 			if not node_queue.empty():
 				print(str(self.NextGenSize.value))
 				currentNode = node_queue.get() 
+				self.state_greatest_link_id.value += 1
+				# go through the children and find whether we've processed them before
+				self.state_node_list.append(currentNode)
 				for child in currentNode.Children:
 					if child not in self.state_Processed_URL_List:
 						self.state_ToBeProcessed_URL_List.append(child)
+						
 				print(f'cur_node: {currentNode} ')
 		completed.value = 1
 		print(f'completed.value: {completed.value} ')
@@ -171,12 +173,12 @@ class CrawlerState():
 		producer.join()
 		consumer.join()
 		print(f'producer and consumer joined ')
-
+		print(len(self.state_node_list))
 		# after while execution
-		for num in range(0, node_queue.qsize()):
-			node_popped = node_queue.get()
-			print(f'node_popped: {node_popped}  num = {num}')
-			self.state_node_list.append(node_popped)
+		# for num in range(0, node_queue.qsize()):
+		# 	node_popped = node_queue.get()
+		# 	print(f'node_popped: {node_popped}  num = {num}')
+		# 	self.state_node_list.append(node_popped)
 		
 # ! end ########################################################
 
@@ -192,7 +194,7 @@ class CrawlerState():
 			return currentGenSize
 
 	def pushNode(self, node):
-		multiprocessing.lock
+		# multiprocessing.lock
 		self.state_greatest_link_id += 1
 		self.state_node_list.append(node)
 		self.state_Processed_URL_List.append(node.URL)
@@ -319,6 +321,7 @@ def asignAliasToChildren(node, state):
 	Children_LinkNums = ""
 	currentChildAlias = ""
 	node.ChildrenAliasList = []
+	print(f'node.Children ======= {node.Children}')
 	if len(node.Children) > 0:  # ensure that the node has children
 		for child in node.Children:
 				# iterate over the children and find their alias
@@ -357,32 +360,30 @@ def PRODUCER_PROCESS(producer_stall,SHARED_CHILDREN_Q, url_Q, completed):
 def CONSUMER_PROCESS(currentGenSize,NextGenSize, state_greatest_link_id, currentGenNumber,SHARED_CHILDREN_Q,nodeQ, completed, PROCESSED_LIST):
 			#! CONSUMER WILL GET THE FRONT OF THE CHILD QUEUE AND
 			#!  PUSH A WEBNODE TO THE NODEQ 
-			# 
-			consumer_Processed_URL_List = []
 			print('*[ CONSUMER ]  process executing')
 
 			while completed.value is not 1:
 			# process the children ListObject at the head of the q
 				if not SHARED_CHILDREN_Q.empty():
-						childrenset = SHARED_CHILDREN_Q.get()
-					
-					
-						url = childrenset.pop(0)
-						# ! Generation update
+											# ! Generation update
 						if currentGenSize.value <= 0:
 							print('*[ CONSUMER ] is in if statement desu')
 							currentGenNumber.value = currentGenNumber.value + 1
 							currentGenSize.value = NextGenSize.value
 							NextGenSize.value = 0
 						currentGenSize.value = currentGenSize.value - 1
-						# print('childrenset if')
+						childrenset = SHARED_CHILDREN_Q.get()
+						url = childrenset.pop(0)
+
+
+						# reconstruct the children in array form
 						children = []
 						for child in childrenset:
 							children.append(child)
 							if child not in PROCESSED_LIST:
-								PROCESSED_LIST.append(child)
 								NextGenSize.value = NextGenSize.value + 1
-						print(f'*[ CONSUMER ] NextGenSize.value is = {NextGenSize.value}')
+								PROCESSED_LIST.append(child)
+						print(f'*[ CONSUMER ] NextGenSize.value is = {NextGenSize.value} \t currentGenSize.value = {currentGenSize.value} \t currentGenNumber = {currentGenNumber.value} \tstate_greatest_link_id.value = {state_greatest_link_id.value} ')
 						nodeQ.put(WebCrawlNode(currentGenNumber.value, state_greatest_link_id.value, children, url))
 
 
@@ -401,24 +402,24 @@ if __name__ == '__main__':
 	for node in State.state_node_list:
 		# assigns the generations as well
 		asignAliasToChildren(node, State)
-	# cumList = State.getCumulativeChildList()
-	# most = State.findMostChildren()
-	# mm = State.findMostMentioned(cumList)
+	cumList = State.getCumulativeChildList()
+	most = State.findMostChildren()
+	mm = State.findMostMentioned(cumList)
 	if DEBUG is True:
 		spacer = f"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n"
 		print(f"Node that was mentioned most: N{str(mm)}")
 		print(
 			f'Node with the most children is NODE[{most[0]}] with {most[1]} children')
 		print(f'\n{spacer}\tCUMULATIVE-CHILD-LIST\n{spacer}{cumList}\n{spacer}')
-	# State.CSVWriteMost(mm)
-	# State.state_Output_CSV.close()
+	State.CSVWriteMost(mm)
+	State.state_Output_CSV.close()
 	# identify the generation of each node
-	# root = tk.Tk()
+	root = tk.Tk()
 	# root.iconbitmap(r'favicon.ico')
-	# app = Application(generations, most[1], State.state_node_list, master=root)
-	# app.makeGrid()
+	app = Application(generations, most[1], State.state_node_list, master=root)
+	app.makeGrid()
 
-	# app.drawNodes(generations)
-	# app.drawNodesChildConnections()
-	# app.LabelGens()
-	# app.mainloop()
+	app.drawNodes(generations)
+	app.drawNodesChildConnections()
+	app.LabelGens()
+	app.mainloop()
