@@ -1,5 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+ui/
+output/*
 test_env/
 .vscode/
 urltxt_bk/
@@ -107,3 +109,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 output.csv
+producer_consumer_mp.py
+base/crawler.1.py
+base/sample-concurrency.py

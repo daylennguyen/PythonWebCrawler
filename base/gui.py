@@ -11,7 +11,7 @@ class Application(tk.Frame):
 				 spacerX=0, master=None):
 		# self.padx = 25
 		self.dimw = 400
-		self.dimh = 950
+		self.dimh = 880
 		self.master = master
 		tk.Frame.__init__(self, master, width=self.dimw, height=self.dimh)
 		self.cnv = tk.Canvas(master, width=self.dimw, height=self.dimh,cursor="spider")
